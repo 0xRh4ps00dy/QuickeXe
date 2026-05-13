@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generador de paquetes eXeLearning</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Generador de paquetes eXeLearning</h1>
+  <p class="subtitle">Sube un <strong>DOCX</strong> o <strong>PDF</strong> con texto digital y descarga el paquete listo para importar en eXeLearning.</p>
+</header>
+
+<main class="app-main">
+
+  <!-- ── Upload form ──────────────────────────────────────── -->
+  <section class="card upload-card">
+    <h2>1. Sube el archivo</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <label class="drop-zone" id="dropZone" for="fileInput">
+        <span class="drop-icon">📄</span>
+        <span class="drop-text">Arrastra aquí tu archivo o <u>haz clic para seleccionar</u></span>
+        <span class="drop-hint">DOCX o PDF · máx. 50 MB</span>
+        <input type="file" id="fileInput" name="file" accept=".docx,.pdf" required>
+      </label>
+      <div id="fileInfo" class="file-info hidden"></div>
+      <button type="submit" id="submitBtn" class="btn-primary" disabled>
+        Convertir y descargar
+      </button>
+      <div id="statusMsg" class="status-msg hidden"></div>
+    </form>
+  </section>
+
+  <!-- ── Checklist ────────────────────────────────────────── -->
+  <section class="card checklist-card">
+    <h2>2. Checklist de limpieza DOCX</h2>
+    <p class="checklist-intro">Prepara el documento antes de subirlo para obtener el mejor resultado. La conversión DOCX es más fiable que PDF directo.</p>
+
+    <h3>Obligatorio</h3>
+    <ul class="checklist">
+      <li><label><input type="checkbox"> Aplicar estilos de Word reales: <strong>Título 1</strong>, Título 2, Título 3.</label></li>
+      <li><label><input type="checkbox"> Cada bloque temático principal empieza con un <strong>Título 1</strong> (se convierte en página).</label></li>
+      <li><label><input type="checkbox"> Una sola columna de lectura en todo el documento.</label></li>
+      <li><label><input type="checkbox"> Sin cuadros de texto flotantes ni elementos superpuestos.</label></li>
+      <li><label><input type="checkbox"> Listas creadas con el formato de lista nativo de Word (no guiones manuales).</label></li>
+      <li><label><input type="checkbox"> Sin saltos de línea ni párrafos vacíos innecesarios.</label></li>
+      <li><label><input type="checkbox"> Imágenes insertadas <strong>en línea</strong> con el texto, no como flotantes ancladas.</label></li>
+      <li><label><input type="checkbox"> Tablas simples, sin fusiones complejas de celdas.</label></li>
+    </ul>
+
+    <h3>Recomendado (si viene de PDF)</h3>
+    <ul class="checklist">
+      <li><label><input type="checkbox"> Eliminar encabezados y pies repetitivos heredados del PDF.</label></li>
+      <li><label><input type="checkbox"> Comprobar que el orden de lectura es continuo de arriba hacia abajo.</label></li>
+      <li><label><input type="checkbox"> Revisar que los títulos no sean solo texto en negrita sin estilo de encabezado.</label></li>
+    </ul>
+
+    <h3>Flujo recomendado</h3>
+    <ol class="flow-list">
+      <li>Convertir el PDF a DOCX (Word, LibreOffice o herramienta online).</li>
+      <li>Limpiar el DOCX con este checklist.</li>
+      <li>Subir el DOCX aquí y descargar el paquete ZIP.</li>
+      <li>Importar el ZIP en eXeLearning o abrirlo directamente como sitio web.</li>
+    </ol>
+
+    <div class="notice">
+      <strong>Limitación:</strong> Solo se procesan documentos con texto digital. No se aplica OCR.
+      Si el PDF original es un escaneado, primero conviértelo con una herramienta de reconocimiento de texto.
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <p>Generador basado en <a href="https://exelearning.net/" target="_blank" rel="noopener">eXeLearning</a></p>
+</footer>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
