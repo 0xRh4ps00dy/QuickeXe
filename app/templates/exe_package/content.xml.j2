@@ -61,7 +61,7 @@
   <odePageId>{{ page.id }}</odePageId>
   <odeParentPageId></odeParentPageId>
   <pageName>{{ page.title }}</pageName>
-  <odeNavStructureOrder>{{ loop.index0 }}</odeNavStructureOrder>
+  <odeNavStructureOrder>{{ loop.index }}</odeNavStructureOrder>
   <odeNavStructureProperties>
     <odeNavStructureProperty>
       <key>titlePage</key>
@@ -69,6 +69,50 @@
     </odeNavStructureProperty>
   </odeNavStructureProperties>
   <odePagStructures>
+    {% for component in page.components %}
+    <odePagStructure>
+      <odePageId>{{ page.id }}</odePageId>
+      <odeBlockId>{{ component.block_id }}</odeBlockId>
+      <blockName>{{ page.title }} · Bloque {{ loop.index }}</blockName>
+      <iconName></iconName>
+      <odePagStructureOrder>{{ loop.index }}</odePagStructureOrder>
+      <odePagStructureProperties>
+        <odePagStructureProperty>
+          <key>visibility</key>
+          <value>true</value>
+        </odePagStructureProperty>
+        <odePagStructureProperty>
+          <key>teacherOnly</key>
+          <value>false</value>
+        </odePagStructureProperty>
+        <odePagStructureProperty>
+          <key>allowToggle</key>
+          <value>true</value>
+        </odePagStructureProperty>
+        <odePagStructureProperty>
+          <key>minimized</key>
+          <value>false</value>
+        </odePagStructureProperty>
+      </odePagStructureProperties>
+      <odeComponents>
+        <odeComponent>
+          <odePageId>{{ page.id }}</odePageId>
+          <odeBlockId>{{ component.block_id }}</odeBlockId>
+          <odeIdeviceId>{{ component.idevice_id }}</odeIdeviceId>
+          <odeIdeviceTypeName>text</odeIdeviceTypeName>
+          <htmlView><![CDATA[{{ component.html_view | safe }}]]></htmlView>
+          <jsonProperties><![CDATA[{{ component.json_properties | safe }}]]></jsonProperties>
+          <odeComponentsOrder>1</odeComponentsOrder>
+          <odeComponentsProperties>
+            <odeComponentsProperty>
+              <key>visibility</key>
+              <value>true</value>
+            </odeComponentsProperty>
+          </odeComponentsProperties>
+        </odeComponent>
+      </odeComponents>
+    </odePagStructure>
+    {% endfor %}
   </odePagStructures>
 </odeNavStructure>
 {% endfor %}

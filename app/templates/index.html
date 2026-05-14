@@ -26,48 +26,35 @@
         <input type="file" id="fileInput" name="file" accept=".docx,.pdf" required>
       </label>
       <div id="fileInfo" class="file-info hidden"></div>
-      <button type="submit" id="submitBtn" class="btn-primary" disabled>
-        Convertir y descargar
-      </button>
+      <div class="actions-row">
+        <button type="button" id="previewBtn" class="btn-secondary" disabled>
+          Previsualizar paquete
+        </button>
+        <button type="submit" id="submitBtn" class="btn-primary" disabled>
+          Convertir y descargar
+        </button>
+      </div>
       <div id="statusMsg" class="status-msg hidden"></div>
     </form>
   </section>
 
-  <!-- ── Checklist ────────────────────────────────────────── -->
-  <section class="card checklist-card">
-    <h2>2. Checklist de limpieza DOCX</h2>
-    <p class="checklist-intro">Prepara el documento antes de subirlo para obtener el mejor resultado. La conversión DOCX es más fiable que PDF directo.</p>
+  <section class="card preview-card hidden" id="previewCard">
+    <h2>Vista previa del paquete</h2>
+    <p class="preview-intro">Así se verá la estructura y el contenido antes de importarlo en eXeLearning.</p>
+    <div class="preview-meta" id="previewMeta"></div>
 
-    <h3>Obligatorio</h3>
-    <ul class="checklist">
-      <li><label><input type="checkbox"> Aplicar estilos de Word reales: <strong>Título 1</strong>, Título 2, Título 3.</label></li>
-      <li><label><input type="checkbox"> Cada bloque temático principal empieza con un <strong>Título 1</strong> (se convierte en página).</label></li>
-      <li><label><input type="checkbox"> Una sola columna de lectura en todo el documento.</label></li>
-      <li><label><input type="checkbox"> Sin cuadros de texto flotantes ni elementos superpuestos.</label></li>
-      <li><label><input type="checkbox"> Listas creadas con el formato de lista nativo de Word (no guiones manuales).</label></li>
-      <li><label><input type="checkbox"> Sin saltos de línea ni párrafos vacíos innecesarios.</label></li>
-      <li><label><input type="checkbox"> Imágenes insertadas <strong>en línea</strong> con el texto, no como flotantes ancladas.</label></li>
-      <li><label><input type="checkbox"> Tablas simples, sin fusiones complejas de celdas.</label></li>
-    </ul>
-
-    <h3>Recomendado (si viene de PDF)</h3>
-    <ul class="checklist">
-      <li><label><input type="checkbox"> Eliminar encabezados y pies repetitivos heredados del PDF.</label></li>
-      <li><label><input type="checkbox"> Comprobar que el orden de lectura es continuo de arriba hacia abajo.</label></li>
-      <li><label><input type="checkbox"> Revisar que los títulos no sean solo texto en negrita sin estilo de encabezado.</label></li>
-    </ul>
-
-    <h3>Flujo recomendado</h3>
-    <ol class="flow-list">
-      <li>Convertir el PDF a DOCX (Word, LibreOffice o herramienta online).</li>
-      <li>Limpiar el DOCX con este checklist.</li>
-      <li>Subir el DOCX aquí y descargar el paquete ZIP.</li>
-      <li>Importar el ZIP en eXeLearning o abrirlo directamente como sitio web.</li>
-    </ol>
-
-    <div class="notice">
-      <strong>Limitación:</strong> Solo se procesan documentos con texto digital. No se aplica OCR.
-      Si el PDF original es un escaneado, primero conviértelo con una herramienta de reconocimiento de texto.
+    <div class="preview-layout">
+      <aside>
+        <h3>Páginas</h3>
+        <ul id="previewNav" class="preview-nav"></ul>
+      </aside>
+      <div class="preview-frame-wrap">
+        <iframe
+          id="previewFrame"
+          class="preview-frame"
+          title="Previsualización del paquete eXeLearning"
+        ></iframe>
+      </div>
     </div>
   </section>
 

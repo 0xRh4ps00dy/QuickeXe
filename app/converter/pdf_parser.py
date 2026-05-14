@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import re
 import uuid
+from urllib.parse import parse_qs, urlparse
 from typing import BinaryIO
 
 from pypdf import PdfReader
@@ -27,14 +28,14 @@ from pypdf import PdfReader
 # Public API
 # ---------------------------------------------------------------------------
 
-def parse_pdf(stream: BinaryIO) -> list[dict]:
+def parse_pdf(stream: BinaryIO) -> tuple[list[dict], list[dict]]:
     reader = PdfReader(stream)
     raw_text_pages = _extract_pages(reader)
     pages: list[dict] = []
     for idx, lines in enumerate(raw_text_pages):
         title, body_lines = _pick_title(lines, idx)
         pages.append(_render_section(title, body_lines, idx))
-    return pages
+    return pages, []
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +102,45 @@ def _slug(text: str) -> str:
     return text or "page"
 
 
+def _video_embed_from_url(url: str) -> str | None:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        return None
+
+    netloc = parsed.netloc.lower()
+    path = parsed.path or ""
+
+    if "youtube.com" in netloc:
+        video_id = parse_qs(parsed.query).get("v", [""])[0]
+        if video_id:
+            return (
+                f'<div class="exe-video"><iframe src="https://www.youtube.com/embed/{video_id}" '
+                'title="Video" loading="lazy" allowfullscreen></iframe></div>'
+            )
+
+    if "youtu.be" in netloc:
+        video_id = path.strip("/")
+        if video_id:
+            return (
+                f'<div class="exe-video"><iframe src="https://www.youtube.com/embed/{video_id}" '
+                'title="Video" loading="lazy" allowfullscreen></iframe></div>'
+            )
+
+    if "vimeo.com" in netloc:
+        video_id = path.strip("/")
+        if video_id.isdigit():
+            return (
+                f'<div class="exe-video"><iframe src="https://player.vimeo.com/video/{video_id}" '
+                'title="Video" loading="lazy" allowfullscreen></iframe></div>'
+            )
+
+    if path.lower().endswith((".mp4", ".webm", ".ogg")):
+        safe_url = url.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        return f'<video controls preload="metadata" src="{safe_url}"></video>'
+
+    return None
+
+
 def _render_section(title: str, lines: list[str], idx: int) -> dict:
     page_title = title.strip() or f"Pagina {idx + 1}"
     page_id = f"page-{_slug(page_title)}-{uuid.uuid4().hex[:8]}"
@@ -111,8 +151,12 @@ def _render_section(title: str, lines: list[str], idx: int) -> dict:
     def flush():
         text = " ".join(paragraph_buffer).strip()
         if text:
-            escaped = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            html_parts.append(f"<p>{escaped}</p>")
+            video_html = _video_embed_from_url(text)
+            if video_html:
+                html_parts.append(video_html)
+            else:
+                escaped = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                html_parts.append(f"<p>{escaped}</p>")
         paragraph_buffer.clear()
 
     for line in lines:

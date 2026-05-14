@@ -32,12 +32,13 @@ a:hover { color: #1a4e8a; }
 
 /* ── Main layout ──────────────────────────────────────────────── */
 .app-main {
-  max-width: 860px;
-  margin: 2rem auto;
+  width: 100%;
+  margin: 2rem 0;
   padding: 0 1rem;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
+  align-items: start;
 }
 
 /* ── Cards ────────────────────────────────────────────────────── */
@@ -47,7 +48,13 @@ a:hover { color: #1a4e8a; }
   padding: 1.75rem 2rem;
   box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
+.upload-card {
+  grid-column: 1;
+}
 
+.preview-card {
+  grid-column: 2;
+}
 .card h2 {
   font-size: 1.2rem;
   font-weight: 700;
@@ -113,6 +120,32 @@ a:hover { color: #1a4e8a; }
 
 .btn-primary:hover:not(:disabled) { background: #1a4e8a; }
 .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.actions-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-secondary {
+  display: inline-block;
+  background: #eef4fb;
+  color: #1a4e8a;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.65rem 1.4rem;
+  border: 1px solid #c0d6ef;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .2s, opacity .2s, border-color .2s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e1edf9;
+  border-color: #9bbfe5;
+}
+
+.btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Status messages ──────────────────────────────────────────── */
 .status-msg {
@@ -194,6 +227,81 @@ a:hover { color: #1a4e8a; }
   color: #5d4037;
 }
 
+/* ── Preview ─────────────────────────────────────────────────── */
+.preview-intro {
+  margin-bottom: 0.65rem;
+  color: #4a4a4a;
+}
+
+.preview-meta {
+  font-size: 0.9rem;
+  color: #2a6ebb;
+  margin-bottom: 0.9rem;
+}
+
+.preview-layout {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 1rem;
+  min-height: 520px;
+}
+
+.preview-layout aside {
+  border: 1px solid #dce8f6;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #fbfdff;
+}
+
+.preview-layout aside h3 {
+  margin-bottom: 0.55rem;
+  color: #1a4e8a;
+  font-size: 0.95rem;
+}
+
+.preview-nav {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.preview-nav button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #d2e2f3;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.5rem 0.55rem;
+  font-size: 0.88rem;
+  color: #1f2d3d;
+  cursor: pointer;
+}
+
+.preview-nav button:hover {
+  background: #f4f8fd;
+}
+
+.preview-nav button.active {
+  border-color: #2a6ebb;
+  background: #eaf3fd;
+  color: #1a4e8a;
+  font-weight: 600;
+}
+
+.preview-frame-wrap {
+  border: 1px solid #dce8f6;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.preview-frame {
+  width: 100%;
+  min-height: 520px;
+  border: 0;
+}
+
 /* ── Footer ───────────────────────────────────────────────────── */
 .app-footer {
   text-align: center;
@@ -204,3 +312,26 @@ a:hover { color: #1a4e8a; }
 
 /* ── Utility ──────────────────────────────────────────────────── */
 .hidden { display: none !important; }
+
+@media (max-width: 1200px) {
+  .app-main {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-card {
+    grid-column: 1;
+  }
+
+  .preview-card {
+    grid-column: 1;
+  }
+
+  .preview-layout {
+    grid-template-columns: 1fr;
+    min-height: initial;
+  }
+
+  .preview-frame {
+    min-height: 440px;
+  }
+}
