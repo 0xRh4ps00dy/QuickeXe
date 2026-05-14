@@ -12,7 +12,7 @@ Strategy:
 - Split at every Heading 1 paragraph.
 - If the document has no Heading 1 the whole document becomes a single page
   using the filename stem (caller may override the title later).
-- Headings 2/3 become <h2>/<h3>.
+- Headings 2/3 become <h3>/<h4>.
 - Lists → <ul>/<ol><li>.
 - Paragraphs → <p>.
 - Tables → <table>.
@@ -468,7 +468,8 @@ def _render_page(raw: dict, doc: Document, media: _MediaRegistry) -> dict:
 
         if heading_level and heading_level > 1:
             flush_list()
-            tag = f"h{heading_level}"
+            # Keep a lower in-page hierarchy because page title already renders as <h1>.
+            tag = f"h{min(6, heading_level + 1)}"
             html_parts.append(f"<{tag}>{_para_to_html(para, media)}</{tag}>")
             continue
 
