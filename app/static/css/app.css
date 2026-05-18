@@ -104,6 +104,32 @@ a:hover { color: #1a4e8a; }
   word-break: break-all;
 }
 
+.field-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #294b73;
+  margin-bottom: 0.4rem;
+}
+
+.text-input {
+  width: 100%;
+  border: 1px solid #c0d6ef;
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.93rem;
+  margin-bottom: 1rem;
+}
+
+.text-input:focus {
+  outline: 2px solid #9bbfe5;
+  border-color: #2a6ebb;
+}
+
+.btn-dir-picker {
+  margin-bottom: 1rem;
+}
+
 /* ── Buttons ──────────────────────────────────────────────────── */
 .btn-primary {
   display: inline-block;
@@ -313,6 +339,107 @@ a:hover { color: #1a4e8a; }
 /* ── Utility ──────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 31, 53, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-panel {
+  width: min(760px, 100%);
+  max-height: 85vh;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #dce8f6;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #1a4e8a;
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  border: 0;
+  background: transparent;
+  color: #1a4e8a;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1rem 0.3rem;
+}
+
+.dir-current-path {
+  margin: 0.4rem 1rem 0.6rem;
+  color: #355a86;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.dir-list {
+  list-style: none;
+  padding: 0 1rem 1rem;
+  margin: 0;
+  overflow: auto;
+  min-height: 220px;
+}
+
+.dir-list li {
+  margin-bottom: 0.45rem;
+}
+
+.dir-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #d2e2f3;
+  background: #fff;
+  color: #1f2d3d;
+  cursor: pointer;
+}
+
+.dir-item:hover {
+  background: #f1f7ff;
+  border-color: #9bbfe5;
+}
+
+.dir-empty {
+  color: #5d6c7c;
+  font-size: 0.92rem;
+  padding: 0.45rem 0.2rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem 1rem;
+  border-top: 1px solid #dce8f6;
+}
+
 @media (max-width: 1200px) {
   .app-main {
     grid-template-columns: 1fr;
@@ -333,5 +460,9 @@ a:hover { color: #1a4e8a; }
 
   .preview-frame {
     min-height: 440px;
+  }
+
+  .modal-panel {
+    max-height: 92vh;
   }
 }

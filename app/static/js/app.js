@@ -2,6 +2,7 @@
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
 const fileInfo  = document.getElementById("fileInfo");
+const outputDirInput = document.getElementById("outputDirInput");
 const submitBtn = document.getElementById("submitBtn");
 const previewBtn = document.getElementById("previewBtn");
 const statusMsg = document.getElementById("statusMsg");
@@ -10,10 +11,30 @@ const previewCard = document.getElementById("previewCard");
 const previewMeta = document.getElementById("previewMeta");
 const previewNav = document.getElementById("previewNav");
 const previewFrame = document.getElementById("previewFrame");
+const openDirModalBtn = document.getElementById("openDirModalBtn");
+const directoryModal = document.getElementById("directoryModal");
+const closeDirModalBtn = document.getElementById("closeDirModalBtn");
+const dirHomeBtn = document.getElementById("dirHomeBtn");
+const dirProjectBtn = document.getElementById("dirProjectBtn");
+const dirUpBtn = document.getElementById("dirUpBtn");
+const cancelDirSelectionBtn = document.getElementById("cancelDirSelectionBtn");
+const selectCurrentDirBtn = document.getElementById("selectCurrentDirBtn");
+const dirCurrentPath = document.getElementById("dirCurrentPath");
+const dirList = document.getElementById("dirList");
 
 const ALLOWED = [".docx", ".pdf"];
 const MAX_MB  = 50;
 let previewState = null;
+let dirBrowserState = {
+  currentPath: "",
+  parentPath: "",
+  homePath: "",
+  projectPath: "",
+};
+
+function selectedFiles() {
+  return Array.from(fileInput.files || []);
+}
 
 function validateFile(file) {
   if (!file) return null;
@@ -27,18 +48,53 @@ function validateFile(file) {
   return null;
 }
 
-function showFileInfo(file) {
-  const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-  fileInfo.textContent = `📄 ${file.name} — ${sizeMB} MB`;
+function validateFiles(files) {
+  if (!files.length) {
+    return "Selecciona al menos un archivo DOCX o PDF.";
+  }
+  for (const file of files) {
+    const err = validateFile(file);
+    if (err) {
+      return `${file.name}: ${err}`;
+    }
+  }
+  return null;
+}
+
+function updateActionButtons(isBusy = false) {
+  if (isBusy) {
+    submitBtn.disabled = true;
+    previewBtn.disabled = true;
+    return;
+  }
+
+  const files = selectedFiles();
+  const hasFiles = files.length > 0;
+  const hasOutputDir = Boolean(outputDirInput.value.trim());
+  const requiresOutputDir = files.length > 1;
+
+  previewBtn.disabled = files.length !== 1;
+  submitBtn.disabled = !(hasFiles && (!requiresOutputDir || hasOutputDir));
+}
+
+function showFileInfo(files) {
+  const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+  const sizeMB = (totalBytes / (1024 * 1024)).toFixed(2);
+  const lines = files.slice(0, 5).map(file => `• ${file.name}`);
+  if (files.length > 5) {
+    lines.push(`• ... y ${files.length - 5} más`);
+  }
+
+  fileInfo.textContent = `${files.length} archivo(s) seleccionado(s) — ${sizeMB} MB\n${lines.join("\n")}`;
+  fileInfo.style.whiteSpace = "pre-line";
   fileInfo.classList.remove("hidden");
-  submitBtn.disabled = false;
-  previewBtn.disabled = false;
+  updateActionButtons();
 }
 
 function clearFileInfo() {
+  fileInfo.textContent = "";
   fileInfo.classList.add("hidden");
-  submitBtn.disabled = true;
-  previewBtn.disabled = true;
+  updateActionButtons();
 }
 
 function clearPreview() {
@@ -61,8 +117,72 @@ function clearStatus() {
 }
 
 function setBusy(isBusy) {
-  submitBtn.disabled = isBusy;
-  previewBtn.disabled = isBusy;
+  updateActionButtons(isBusy);
+}
+
+function openDirectoryModal() {
+  directoryModal.classList.remove("hidden");
+}
+
+function closeDirectoryModal() {
+  directoryModal.classList.add("hidden");
+}
+
+function renderDirectoryList(directories) {
+  dirList.innerHTML = "";
+  if (!directories.length) {
+    const emptyItem = document.createElement("li");
+    emptyItem.textContent = "(No hay subcarpetas en esta ubicación)";
+    emptyItem.className = "dir-empty";
+    dirList.appendChild(emptyItem);
+    return;
+  }
+
+  directories.forEach(dir => {
+    const li = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "dir-item";
+    button.textContent = dir.name;
+    button.title = dir.path;
+    button.addEventListener("click", () => {
+      loadDirectories(dir.path);
+    });
+    li.appendChild(button);
+    dirList.appendChild(li);
+  });
+}
+
+async function loadDirectories(path = "") {
+  const query = path ? `?path=${encodeURIComponent(path)}` : "";
+
+  try {
+    const response = await fetch(`/directories${query}`);
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      showStatus(`Error al listar carpetas: ${payload.detail || response.statusText}`, "error");
+      return;
+    }
+
+    dirBrowserState.currentPath = payload.current_path || "";
+    dirBrowserState.parentPath = payload.parent_path || "";
+
+    if (Array.isArray(payload.shortcuts)) {
+      const home = payload.shortcuts.find(s => s.name === "Inicio");
+      const project = payload.shortcuts.find(s => s.name === "Proyecto");
+      dirBrowserState.homePath = home ? home.path : "";
+      dirBrowserState.projectPath = project ? project.path : "";
+    }
+
+    dirCurrentPath.textContent = dirBrowserState.currentPath || "";
+    dirUpBtn.disabled = !dirBrowserState.parentPath;
+    dirHomeBtn.disabled = !dirBrowserState.homePath;
+    dirProjectBtn.disabled = !dirBrowserState.projectPath;
+    renderDirectoryList(Array.isArray(payload.directories) ? payload.directories : []);
+  } catch (err) {
+    showStatus(`Error de red al listar carpetas: ${err.message}`, "error");
+  }
 }
 
 function escapeHtml(value) {
@@ -141,16 +261,56 @@ function renderPreview(result) {
 
 /* ── File input change ─────────────────────────────────────── */
 fileInput.addEventListener("change", () => {
-  const file = fileInput.files[0];
+  const files = selectedFiles();
   clearStatus();
   clearPreview();
-  const err = validateFile(file);
+  const err = validateFiles(files);
   if (err) {
     showStatus(err, "error");
     clearFileInfo();
     return;
   }
-  showFileInfo(file);
+  showFileInfo(files);
+});
+
+outputDirInput.addEventListener("input", () => {
+  updateActionButtons();
+});
+
+openDirModalBtn.addEventListener("click", async () => {
+  openDirectoryModal();
+  await loadDirectories(outputDirInput.value.trim());
+});
+
+closeDirModalBtn.addEventListener("click", closeDirectoryModal);
+cancelDirSelectionBtn.addEventListener("click", closeDirectoryModal);
+
+directoryModal.addEventListener("click", event => {
+  if (event.target === directoryModal) {
+    closeDirectoryModal();
+  }
+});
+
+dirUpBtn.addEventListener("click", async () => {
+  if (!dirBrowserState.parentPath) return;
+  await loadDirectories(dirBrowserState.parentPath);
+});
+
+dirHomeBtn.addEventListener("click", async () => {
+  if (!dirBrowserState.homePath) return;
+  await loadDirectories(dirBrowserState.homePath);
+});
+
+dirProjectBtn.addEventListener("click", async () => {
+  if (!dirBrowserState.projectPath) return;
+  await loadDirectories(dirBrowserState.projectPath);
+});
+
+selectCurrentDirBtn.addEventListener("click", () => {
+  if (!dirBrowserState.currentPath) return;
+  outputDirInput.value = dirBrowserState.currentPath;
+  updateActionButtons();
+  closeDirectoryModal();
 });
 
 /* ── Drag & drop ───────────────────────────────────────────── */
@@ -167,11 +327,11 @@ fileInput.addEventListener("change", () => {
   })
 );
 dropZone.addEventListener("drop", e => {
-  const file = e.dataTransfer.files[0];
-  if (!file) return;
+  const files = Array.from(e.dataTransfer.files || []);
+  if (!files.length) return;
   clearStatus();
   clearPreview();
-  const err = validateFile(file);
+  const err = validateFiles(files);
   if (err) {
     showStatus(err, "error");
     clearFileInfo();
@@ -179,14 +339,19 @@ dropZone.addEventListener("drop", e => {
   }
   // Assign to file input via DataTransfer
   const dt = new DataTransfer();
-  dt.items.add(file);
+  files.forEach(file => dt.items.add(file));
   fileInput.files = dt.files;
-  showFileInfo(file);
+  showFileInfo(files);
 });
 
 /* ── Preview submit ────────────────────────────────────────── */
 previewBtn.addEventListener("click", async () => {
-  const file = fileInput.files[0];
+  const files = selectedFiles();
+  const file = files[0];
+  if (files.length !== 1 || !file) {
+    showStatus("La vista previa solo esta disponible cuando seleccionas un unico archivo.", "error");
+    return;
+  }
   if (!file) return;
 
   setBusy(true);
@@ -221,14 +386,26 @@ previewBtn.addEventListener("click", async () => {
 form.addEventListener("submit", async e => {
   e.preventDefault();
 
-  const file = fileInput.files[0];
-  if (!file) return;
+  const files = selectedFiles();
+  const outputDir = outputDirInput.value.trim();
+  const err = validateFiles(files);
+  if (err) {
+    showStatus(err, "error");
+    return;
+  }
+  if (files.length > 1 && !outputDir) {
+    showStatus("Para convertir varios archivos debes indicar un directorio de salida.", "error");
+    return;
+  }
 
   setBusy(true);
   showStatus("Convirtiendo… por favor espera.", "loading");
 
   const data = new FormData();
-  data.append("file", file);
+  files.forEach(file => data.append("files", file));
+  if (outputDir) {
+    data.append("output_dir", outputDir);
+  }
 
   try {
     const response = await fetch("/convert", {
@@ -237,29 +414,58 @@ form.addEventListener("submit", async e => {
     });
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: "Error desconocido" }));
-      showStatus(`Error: ${err.detail || response.statusText}`, "error");
+      const errPayload = await response.json().catch(() => ({ detail: "Error desconocido" }));
+      const detail = errPayload.detail;
+      let msg = response.statusText;
+
+      if (typeof detail === "string") {
+        msg = detail;
+      } else if (detail && typeof detail === "object") {
+        const parts = [];
+        if (detail.message) parts.push(detail.message);
+        if (Array.isArray(detail.errors) && detail.errors.length) {
+          parts.push(detail.errors.map(item => `${item.source}: ${item.error}`).join(" | "));
+        }
+        msg = parts.join(" · ") || msg;
+      }
+
+      showStatus(`Error: ${msg}`, "error");
       return;
     }
 
-    const blob = await response.blob();
-    const disposition = response.headers.get("Content-Disposition") || "";
-    const match = disposition.match(/filename="([^"]+)"/);
-    const filename = match ? match[1] : "paquete_exe.zip";
+    const contentType = response.headers.get("Content-Type") || "";
+    if (contentType.includes("application/zip")) {
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match ? match[1] : "paquete_exe.zip";
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
 
-    showStatus(`✅ Paquete generado: ${filename}`, "success");
+      showStatus(`✅ Paquete generado: ${filename}`, "success");
+      return;
+    }
+
+    const result = await response.json();
+    const savedCount = Array.isArray(result.saved_files) ? result.saved_files.length : 0;
+    const errorCount = Array.isArray(result.errors) ? result.errors.length : 0;
+    const statusParts = [result.message || `${savedCount} archivo(s) convertido(s).`];
+    if (errorCount > 0) {
+      statusParts.push(`${errorCount} archivo(s) con error.`);
+    }
+    showStatus(`✅ ${statusParts.join(" ")}`, "success");
   } catch (err) {
     showStatus(`Error de red: ${err.message}`, "error");
   } finally {
-    setBusy(false);
+    updateActionButtons();
   }
 });
+
+updateActionButtons();

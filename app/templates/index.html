@@ -10,28 +10,37 @@
 
 <header class="app-header">
   <h1>Generador de paquetes eXeLearning</h1>
-  <p class="subtitle">Sube un <strong>DOCX</strong> o <strong>PDF</strong> con texto digital y descarga el paquete listo para importar en eXeLearning.</p>
+  <p class="subtitle">Sube uno o varios <strong>DOCX</strong>/<strong>PDF</strong> con texto digital. Puedes descargar un ZIP o guardarlos todos en un directorio de salida.</p>
 </header>
 
 <main class="app-main">
 
   <!-- ── Upload form ──────────────────────────────────────── -->
   <section class="card upload-card">
-    <h2>1. Sube el archivo</h2>
+    <h2>1. Sube los archivos</h2>
     <form id="uploadForm" enctype="multipart/form-data">
       <label class="drop-zone" id="dropZone" for="fileInput">
         <span class="drop-icon">📄</span>
-        <span class="drop-text">Arrastra aquí tu archivo o <u>haz clic para seleccionar</u></span>
+        <span class="drop-text">Arrastra aquí tus archivos o <u>haz clic para seleccionar</u></span>
         <span class="drop-hint">DOCX o PDF · máx. 50 MB</span>
-        <input type="file" id="fileInput" name="file" accept=".docx,.pdf" required>
+        <input type="file" id="fileInput" name="files" accept=".docx,.pdf" required multiple>
       </label>
+      <label for="outputDirInput" class="field-label">Directorio de salida (opcional para 1 archivo, obligatorio para varios)</label>
+      <input
+        type="text"
+        id="outputDirInput"
+        name="output_dir"
+        class="text-input"
+        placeholder="Ejemplo: /home/usuario/salidas_exe"
+      >
+      <button type="button" id="openDirModalBtn" class="btn-secondary btn-dir-picker">Seleccionar carpeta...</button>
       <div id="fileInfo" class="file-info hidden"></div>
       <div class="actions-row">
         <button type="button" id="previewBtn" class="btn-secondary" disabled>
-          Previsualizar paquete
+          Previsualizar (1 archivo)
         </button>
         <button type="submit" id="submitBtn" class="btn-primary" disabled>
-          Convertir y descargar
+          Convertir
         </button>
       </div>
       <div id="statusMsg" class="status-msg hidden"></div>
@@ -59,6 +68,29 @@
   </section>
 
 </main>
+
+<div id="directoryModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="directoryModalTitle">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3 id="directoryModalTitle">Seleccionar carpeta de salida</h3>
+      <button type="button" id="closeDirModalBtn" class="modal-close" aria-label="Cerrar">×</button>
+    </div>
+
+    <div class="modal-toolbar">
+      <button type="button" id="dirHomeBtn" class="btn-secondary">Inicio</button>
+      <button type="button" id="dirProjectBtn" class="btn-secondary">Proyecto</button>
+      <button type="button" id="dirUpBtn" class="btn-secondary">Subir</button>
+    </div>
+
+    <p id="dirCurrentPath" class="dir-current-path"></p>
+    <ul id="dirList" class="dir-list"></ul>
+
+    <div class="modal-actions">
+      <button type="button" id="cancelDirSelectionBtn" class="btn-secondary">Cancelar</button>
+      <button type="button" id="selectCurrentDirBtn" class="btn-primary">Usar esta carpeta</button>
+    </div>
+  </div>
+</div>
 
 <footer class="app-footer">
   <p>Generador basado en <a href="https://exelearning.net/" target="_blank" rel="noopener">eXeLearning</a></p>
