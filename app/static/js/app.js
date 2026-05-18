@@ -25,6 +25,7 @@ const dirList = document.getElementById("dirList");
 const ALLOWED = [".docx", ".pdf"];
 const MAX_MB  = 50;
 let previewState = null;
+let selectedDirectoryHandle = null;
 let dirBrowserState = {
   currentPath: "",
   parentPath: "",
@@ -70,7 +71,7 @@ function updateActionButtons(isBusy = false) {
 
   const files = selectedFiles();
   const hasFiles = files.length > 0;
-  const hasOutputDir = Boolean(outputDirInput.value.trim());
+  const hasOutputDir = Boolean(outputDirInput.value.trim()) || Boolean(selectedDirectoryHandle);
   const requiresOutputDir = files.length > 1;
 
   previewBtn.disabled = files.length !== 1;
@@ -185,6 +186,48 @@ async function loadDirectories(path = "") {
   }
 }
 
+function filenameFromResponse(response) {
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  return match ? match[1] : "paquete_exe.zip";
+}
+
+async function saveZipToLocalDirectory(file, directoryHandle) {
+  const data = new FormData();
+  data.append("files", file);
+
+  const response = await fetch("/convert", {
+    method: "POST",
+    body: data,
+  });
+
+  if (!response.ok) {
+    const errPayload = await response.json().catch(() => ({ detail: "Error desconocido" }));
+    const detail = errPayload.detail;
+    let msg = response.statusText;
+    if (typeof detail === "string") {
+      msg = detail;
+    } else if (detail && typeof detail === "object" && detail.message) {
+      msg = detail.message;
+    }
+    throw new Error(`${file.name}: ${msg}`);
+  }
+
+  const contentType = response.headers.get("Content-Type") || "";
+  if (!contentType.includes("application/zip")) {
+    throw new Error(`${file.name}: Respuesta inesperada del servidor.`);
+  }
+
+  const filename = filenameFromResponse(response);
+  const blob = await response.blob();
+  const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+
+  return filename;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -274,10 +317,27 @@ fileInput.addEventListener("change", () => {
 });
 
 outputDirInput.addEventListener("input", () => {
+  selectedDirectoryHandle = null;
   updateActionButtons();
 });
 
 openDirModalBtn.addEventListener("click", async () => {
+  if (window.showDirectoryPicker) {
+    try {
+      const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      selectedDirectoryHandle = handle;
+      outputDirInput.value = `[Carpeta local] ${handle.name}`;
+      updateActionButtons();
+      showStatus("Carpeta local seleccionada con el selector del sistema.", "success");
+      return;
+    } catch (err) {
+      if (err && err.name === "AbortError") {
+        return;
+      }
+      showStatus(`No se pudo abrir el selector nativo: ${err.message}`, "error");
+    }
+  }
+
   openDirectoryModal();
   await loadDirectories(outputDirInput.value.trim());
 });
@@ -308,6 +368,7 @@ dirProjectBtn.addEventListener("click", async () => {
 
 selectCurrentDirBtn.addEventListener("click", () => {
   if (!dirBrowserState.currentPath) return;
+  selectedDirectoryHandle = null;
   outputDirInput.value = dirBrowserState.currentPath;
   updateActionButtons();
   closeDirectoryModal();
@@ -394,7 +455,39 @@ form.addEventListener("submit", async e => {
     return;
   }
   if (files.length > 1 && !outputDir) {
-    showStatus("Para convertir varios archivos debes indicar un directorio de salida.", "error");
+    if (!selectedDirectoryHandle) {
+      showStatus("Para convertir varios archivos debes indicar un directorio de salida o seleccionar carpeta local.", "error");
+      return;
+    }
+  }
+
+  if (selectedDirectoryHandle) {
+    setBusy(true);
+    showStatus("Convirtiendo y guardando en carpeta local...", "loading");
+
+    const saved = [];
+    const failed = [];
+
+    try {
+      for (const file of files) {
+        try {
+          const outName = await saveZipToLocalDirectory(file, selectedDirectoryHandle);
+          saved.push(outName);
+        } catch (err) {
+          failed.push(err.message);
+        }
+      }
+
+      const parts = [`${saved.length} archivo(s) guardado(s) en la carpeta local.`];
+      if (failed.length) {
+        parts.push(`${failed.length} con error: ${failed.join(" | ")}`);
+      }
+      showStatus(`✅ ${parts.join(" ")}`, failed.length ? "loading" : "success");
+    } catch (err) {
+      showStatus(`Error al guardar en carpeta local: ${err.message}`, "error");
+    } finally {
+      updateActionButtons();
+    }
     return;
   }
 
